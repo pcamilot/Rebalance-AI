@@ -1,0 +1,78 @@
+# ========================================
+# Cell 15: Launch Streamlit Interface with Ngrok
+# ========================================
+
+from pyngrok import ngrok
+import subprocess
+import threading
+import time
+import os
+import signal
+
+print("🌐 Setting up Streamlit interface...")
+print("="*60)
+
+# Kill any existing ngrok processes
+print("🧹 Cleaning up old processes...")
+!pkill -f ngrok
+!pkill -f streamlit
+time.sleep(2)
+
+# Kill any existing ngrok tunnels
+try:
+    ngrok.kill()
+except:
+    pass
+
+# Set your ngrok auth token - REPLACE WITH YOUR TOKEN
+!ngrok authtoken 34CpDVOX0bRQiSPsY0WnthmnhKe_58YKBtgj7VdX5Dzn4gVJb
+
+def run_streamlit():
+    """Run Streamlit in background"""
+    subprocess.run([
+        "streamlit", "run", "app.py",
+        "--server.port", "8501",
+        "--server.headless", "true",
+        "--browser.gatherUsageStats", "false"
+    ])
+
+# Start Streamlit in background thread
+print("🚀 Starting Streamlit server...")
+thread = threading.Thread(target=run_streamlit, daemon=True)
+thread.start()
+
+# Wait for server to start
+print("⏳ Waiting for server to initialize...")
+time.sleep(5)
+
+# Create public URL with ngrok
+print("🔗 Creating public URL...")
+try:
+    public_url = ngrok.connect(8501)
+    print("\n" + "="*60)
+    print("✅ SUCCESS! Your RebalanceAI app is now live!")
+    print("="*60)
+    print(f"\n🌐 Public URL: {public_url}")
+    print(f"\n📱 Click the link above to access your app")
+    print("\n💡 Tips:")
+    print("   - The app will stay live as long as this cell is running")
+    print("   - All your backend functions are built into the app")
+    print("   - Configure API keys in the sidebar")
+    print("\n⚠️  Keep this cell running. Don't interrupt it!")
+    print("\n🛑 To stop: Click 'Interrupt Kernel' or run: !pkill -f ngrok")
+    print("="*60)
+    
+    # Keep the cell running
+    while True:
+        time.sleep(1)
+        
+except KeyboardInterrupt:
+    print("\n🛑 Shutting down...")
+    ngrok.kill()
+    !pkill -f streamlit
+except Exception as e:
+    print(f"\n❌ Ngrok error: {e}")
+    print("\n💡 Troubleshooting:")
+    print("   1. Make sure your ngrok token is correct")
+    print("   2. Try running: !pkill -f ngrok")
+    print("   3. Wait 5 seconds and run this cell again")
